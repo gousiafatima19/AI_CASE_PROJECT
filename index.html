@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Case Reconstruction Portal</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- LOGIN PAGE -->
+    <div id="login-page" class="page active">
+        <div class="login-box">
+            <div class="login-icon">🕵️</div>
+            <h1>Investigation Portal</h1>
+            <p>AI-Based Case Reconstruction & Support</p>
+            
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="username" placeholder="Officer ID (e.g., admin)">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Password">
+            </div>
+            
+            <button class="btn btn-primary" onclick="login()">🔓 Secure Login</button>
+            <p class="hint">Hint: admin / police123</p>
+        </div>
+    </div>
+
+    <!-- APP PAGE -->
+    <div id="app-page" class="page">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2><i class="fas fa-shield-alt"></i> CaseAI</h2>
+            </div>
+            <nav class="nav-links">
+                <a onclick="showDashboard()" class="nav-item active" id="nav-dash">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </a>
+                <a onclick="showReconstruction()" class="nav-item" id="nav-recon">
+                    <i class="fas fa-search"></i> Case Reconstruction
+                </a>
+            </nav>
+            
+            <div class="sys-log">
+                <h4>⚡ System Log</h4>
+                <div id="log-content">[System Ready]</div>
+            </div>
+
+            <div class="sidebar-footer">
+                <a onclick="logout()" class="nav-item text-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            
+            <!-- DASHBOARD VIEW -->
+            <div id="dashboard-view" class="view active">
+                <header class="top-header">
+                    <h1>📊 Investigation Dashboard</h1>
+                    <button class="btn btn-primary" onclick="openModal()">➕ Add New Case</button>
+                </header>
+
+                <div class="metrics-grid">
+                    <div class="metric-card"><h3>Total Cases</h3><p id="metric-total">0</p></div>
+                    <div class="metric-card warning-border"><h3>Remaining Cases</h3><p id="metric-open">0</p></div>
+                    <div class="metric-card success-border"><h3>Closed Cases</h3><p id="metric-closed">0</p></div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card"><canvas id="pieChart"></canvas></div>
+                    <div class="chart-card"><canvas id="barChart"></canvas></div>
+                </div>
+
+                <div class="table-container">
+                    <h2>📋 Case Files</h2>
+                    <table id="caseTable">
+                        <thead><tr><th>ID</th><th>Title</th><th>Officer</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RECONSTRUCTION VIEW -->
+            <div id="reconstruction-view" class="view">
+                <header class="top-header">
+                    <h1>🔍 Case Reconstruction Engine</h1>
+                    <select id="caseSelect" class="custom-select" onchange="loadCase()"></select>
+                </header>
+
+                <!-- Case Header with Close Button -->
+                <div class="case-details-card" id="caseDetails" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="caseInfo" style="width: 80%;"></div>
+                    <button class="btn btn-success" onclick="closeCase()" id="btn-close-case">✅ Mark as Closed</button>
+                </div>
+
+                <div class="add-testimony-card">
+                    <h3>➕ Add Witness Testimony</h3>
+                    <div class="testimony-form">
+                        <input type="text" id="witnessName" placeholder="Witness Name" class="custom-input" style="width: 150px;">
+                        
+                        <select id="testimonyTemplate" class="custom-select" onchange="loadTemplate()" style="width: 220px;">
+                            <option value="">-- Load Template --</option>
+                            <option value="t1">Detailed Statement (Complete)</option>
+                            <option value="t2">Vague Statement (Missing Info)</option>
+                            <option value="t3">AI-Generated Alibi</option>
+                        </select>
+                        
+                        <input type="text" id="testimonyText" placeholder="Enter testimony details..." class="custom-input flex-grow">
+                        <button class="btn btn-primary" onclick="addTestimony()">Add</button>
+                    </div>
+                </div>
+
+                <div class="split-view">
+                    <div class="card graph-card">
+                        <h3>🕸️ Knowledge Graph</h3>
+                        <div id="graphCanvas" class="graph-canvas"></div>
+                    </div>
+                    <div class="card analysis-card">
+                        <h3>🧠 AI Gap Analysis</h3>
+                        <div id="perplexityScore" class="score-box">Select a case to analyze.</div>
+                        
+                        <button class="btn" style="background:#8e44ad; color:white; width:100%; margin-bottom:15px;" onclick="runNGramMatch()">
+                            <i class="fas fa-fingerprint"></i> Run N-Gram Authorship Check
+                        </button>
+                        <div id="ngramResult" style="margin-bottom:15px; font-size:14px; font-weight:bold;"></div>
+                        
+                        <div id="gapAnalysis"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="caseModal">
+        <div class="modal-content">
+            <h2>📁 Log New Case Report</h2>
+            <input type="text" id="newTitle" placeholder="Case Title (e.g., Robbery at Main St)" class="custom-input">
+            <input type="text" id="newOfficer" placeholder="Investigating Officer Name" class="custom-input">
+            <select id="newStatus" class="custom-select w-100">
+                <option value="Open">Open</option><option value="Pending">Pending</option><option value="Closed">Closed</option>
+            </select>
+            <textarea id="newDesc" rows="3" placeholder="Initial Case Description / FIR" class="custom-input"></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-success" onclick="saveCase()">💾 Save Case</button>
+                <button class="btn btn-danger" onclick="closeModal()">❌ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUPABASE CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- APP LOGIC -->
+    <script src="app.js"></script>
+</body>
+</html>
