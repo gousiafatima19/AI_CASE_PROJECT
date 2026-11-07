@@ -1,8 +1,8 @@
 // --- SUPABASE SETUP ---
-// FOR DIRECT UPLOAD: Put your real keys here. 
-// FOR GITHUB ACTIONS: Leave the %% placeholders.
-const supabaseUrl = '%%SUPABASE_URL%%'; 
-const supabaseKey = '%%SUPABASE_KEY%%'; 
+const supabaseUrl = 'https://kawuvttwnixfqhfkmmya.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imthd3V2dHR3bml4ZnFoZmttbXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTM5MDcsImV4cCI6MjEwOTM2OTkwN30.1JfyrLllkqozLQ5nAN3Fl-LngVVu7dnYH1unpeMXS5c';
+//const supabaseUrl = '%%SUPABASE_URL%%'; 
+//const supabaseKey = '%%SUPABASE_KEY%%'; 
 
 let _supabase = null;
 try {
