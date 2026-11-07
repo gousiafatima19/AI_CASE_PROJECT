@@ -1,10 +1,19 @@
+// --- SUPABASE SETUP ---
+// FOR DIRECT UPLOAD: Put your real keys here. 
+// FOR GITHUB ACTIONS: Leave the %% placeholders.
 const supabaseUrl = ''https://kawuvttwnixfqhfkmmya.supabase.co''; 
 const supabaseKey = ''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imthd3V2dHR3bml4ZnFoZmttbXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3OTM5MDcsImV4cCI6MjEwOTM2OTkwN30.1JfyrLllkqozLQ5nAN3Fl-LngVVu7dnYH1unpeMXS5c''; 
-let _supabase;
+
+let _supabase = null;
 try {
-    _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    if (supabaseUrl.includes('%%')) {
+        alert("⚠️ KEYS MISSING: Please replace the %% placeholders with your actual Supabase URL and Key in app.js.");
+    } else {
+        _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    }
 } catch (e) {
     console.error("Supabase failed to initialize.", e);
+    alert("Supabase Init Error: " + e.message);
 }
 
 // --- GLOBAL VARIABLES ---
@@ -31,7 +40,7 @@ function login() {
         document.getElementById('login-page').classList.remove('active');
         document.getElementById('app-page').classList.add('active');
         addLog("Officer ADMIN authenticated.");
-        fetchAllData();
+        if(_supabase) fetchAllData();
     } else {
         alert("❌ Invalid Credentials. Use: admin / police123");
     }
@@ -43,7 +52,6 @@ function logout() { location.reload(); }
 async function fetchAllData() {
     if(!_supabase) return;
     addLog("Syncing with database...");
-    
     try {
         const { data: cData, error: cErr } = await _supabase.from('cases').select('*').order('id', { ascending: true });
         if (cErr) throw cErr;
@@ -91,12 +99,11 @@ async function saveCase() {
     const desc = document.getElementById('newDesc').value;
 
     if(!title || !officer) { alert("Title and Officer are required."); return; }
+    if(!_supabase) { alert("Database not connected. Check console."); return; }
 
     addLog("Saving new case...");
     try {
-        const { error } = await _supabase.from('cases').insert([
-            { title: title, officer: officer, status: status, description: desc }
-        ]);
+        const { error } = await _supabase.from('cases').insert([{ title: title, officer: officer, status: status, description: desc }]);
         if (error) throw error;
 
         addLog(`Case "${title}" created.`);
@@ -113,12 +120,11 @@ async function saveCase() {
 
 // --- CLOSE CASE ---
 async function closeCase() {
-    if(!currentCaseId) return;
+    if(!currentCaseId || !_supabase) return;
     addLog("Updating case status to Closed...");
     try {
         const { error } = await _supabase.from('cases').update({ status: 'Closed' }).eq('id', currentCaseId);
         if (error) throw error;
-
         addLog(`Case #${currentCaseId} closed.`);
         await fetchAllData(); 
         loadCase(); 
@@ -222,11 +228,10 @@ async function addTestimony() {
     const witness = document.getElementById('witnessName').value;
     const text = document.getElementById('testimonyText').value;
     if(!witness || !text) { alert("Please fill both fields."); return; }
+    if(!_supabase) { alert("Database not connected."); return; }
 
     try {
-        const { error } = await _supabase.from('testimonies').insert([
-            { case_id: currentCaseId, witness: witness, text: text }
-        ]);
+        const { error } = await _supabase.from('testimonies').insert([{ case_id: currentCaseId, witness: witness, text: text }]);
         if (error) throw error;
 
         addLog(`Testimony saved for ${witness}.`);
@@ -254,7 +259,6 @@ function renderTestimonies() {
         return;
     }
 
-    // Uses the most recently added testimony
     const latest = caseTests[caseTests.length - 1];
     const textLower = latest.text.toLowerCase();
     const words = textLower.split(' ');
@@ -303,12 +307,10 @@ function runNGramMatch() {
     setTimeout(() => {
         const score = (Math.random() * (95 - 10) + 10).toFixed(1);
         if(score > 70) {
-            resultBox.innerHTML = `<div class="alert-box" style="background:#f3e5f5; border-color:#8e44ad; color:#4a148c;">
-                <b>🚨 HIGH MATCH: ${score}% Similarity</b><br>Trigram analysis suggests these witnesses may have collaborated.</div>`;
+            resultBox.innerHTML = `<div class="alert-box" style="background:#f3e5f5; border-color:#8e44ad; color:#4a148c;"><b>🚨 HIGH MATCH: ${score}% Similarity</b><br>Trigram analysis suggests these witnesses may have collaborated.</div>`;
             addLog(`N-Gram alert: High similarity (${score}%).`);
         } else {
-            resultBox.innerHTML = `<div class="success-box" style="background:#e8f5e9; border-color:#4caf50; color:#1b5e20;">
-                <b>✅ LOW MATCH: ${score}% Similarity</b><br>Stylistic fingerprints are distinct.</div>`;
+            resultBox.innerHTML = `<div class="success-box" style="background:#e8f5e9; border-color:#4caf50; color:#1b5e20;"><b>✅ LOW MATCH: ${score}% Similarity</b><br>Stylistic fingerprints are distinct.</div>`;
             addLog(`N-Gram check passed. Similarity: ${score}%`);
         }
     }, 1200);
